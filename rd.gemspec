@@ -16,11 +16,11 @@ Gem::Specification.new do |s|
   ]
 
   s.executables = ['rd']
-  s.extra_rdoc_files = %w[README]
+  s.extra_rdoc_files = %w[README.md]
 
   s.add_dependency 'nokogiri'
   s.add_dependency 'rainbow'
 
-  s.homepage = "http://rd.4pcbr.com"
+  s.homepage = "https://github.com/4pcbr/rd"
   s.require_paths = %w[lib]
 end

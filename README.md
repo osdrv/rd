@@ -9,7 +9,7 @@ Usage
 -----
 
     $ rd list
-        Will output all the kernel classes data retrieving is available for.
+        Will output all the core classes data retrieving is available for.
 
     $ rd :class_name
         Will output all the class methods and class includes such as additional modules.

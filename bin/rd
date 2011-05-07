@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+require File.join(File.dirname(__FILE__), '..', 'lib', 'rklass')
+
+begin
+  raise "No search data given. Skiped." if ARGV.size == 0
+  rk = RKlass.new(ARGV)
+  puts rk.cout
+rescue => e
+  puts "Execution error: #{e.message}"
+  exit 1
+end

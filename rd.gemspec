@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = 'rd'
-  s.version = '0.0.1'
-  s.date = '2011-05-07'
+  s.version = '0.0.2'
+  s.date = '2011-05-11'
 
   s.description = 'ruby kernel classes documentation cli tool'
   s.summary = s.description

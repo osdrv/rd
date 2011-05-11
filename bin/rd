@@ -3,9 +3,12 @@
 require File.join(File.dirname(__FILE__), '..', 'lib', 'rklass')
 
 begin
-  raise "No search data given. Skiped." if ARGV.size == 0
-  rk = RKlass.new(ARGV)
-  puts rk.cout
+  data = ARGV
+  data = ['tutorial'] if !data.any?
+  rk = RKlass.new(data)
+  rk.cout do |content|
+    puts content
+  end
 rescue => e
   puts "Execution error: #{e.message}"
   exit 1

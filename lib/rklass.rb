@@ -64,61 +64,99 @@ class RKlass
 
   def initialize(data)
       @search = data.first
-      raise "No class entry found: #{@search}." if !KLASSES.include?(@search) && !KLASSES.include?(@search.capitalize) && !self.respond_to?(@search.to_sym)
+      raise "No class entry found: #{@search}." if (
+        !KLASSES.include?(@search) && 
+        !KLASSES.include?(@search.capitalize) && 
+        !self.respond_to?(@search.to_sym)
+      )
       @method = data[1] if data.size > 1
   end
 
-  def cout
+  def self.load_class_data(klass)
+    data = Nokogiri::HTML(open("http://ruby-doc.org/core/classes/#{klass}.html"))
+    yield data if block_given?
+    data
+  end
+
+  def self.parse_class_data(doc)
+    methods = {}
+    includes = []
+    doc.css('#method-list div.name-list a').each do |method_link|
+      method_name = method_link.content.to_s
+      href = method_link['href'].sub('#', '')
+      method_heading = ''
+      method_descr = ''
+      method_examples = ''
+      doc.css('#method-' + href).each do |l|
+        l.css('div.method-heading span.method-name').each do |span|
+          method_heading = span.content.to_s.split(/<br>|\n/)
+        end
+        l.css('div.method-description p, div.method-description pre').each do |p|
+          method_descr += p.content.to_s.gsub(/<.+?>(.+)?<\/.+?>/, '\1')
+        end
+      end
+      methods[method_name] = {
+        :interface => method_heading,
+        :description => method_descr
+      }
+    end
+    doc.css('#includes-list a').each do |incl|
+      includes << incl.content.to_s
+    end
+    data = { :methods => methods, :includes => includes }
+    yield data if block_given?
+    data
+  end
+
+  def cout(&blk)
     if self.respond_to?(@search.to_sym)
-      Formatter.cout(self.send(@search.to_sym))
+      Formatter.cout(self.send(@search.to_sym, &blk))
     else
       klass = @search
       klass = klass.capitalize if !KLASSES.include?(klass)
-      doc = Nokogiri::HTML(open("http://ruby-doc.org/core/classes/#{klass}.html"))
-      methods = {}
-      includes = []
-      doc.css('#method-list div.name-list a').each do |method_link|
-        method_name = method_link.content.to_s
-        href = method_link['href'].sub('#', '')
-        method_heading = ''
-        method_descr = ''
-        method_examples = ''
-        doc.css('#method-' + href).each do |l|
-          l.css('div.method-heading span.method-name').each do |span|
-            method_heading = span.content.to_s.split(/<br>|\n/)
+      # class_data = parse_class_data(load_class_data(klass))
+      RKlass::load_class_data(klass) do |klass_doc|
+        RKlass::parse_class_data(klass_doc) do |class_data|
+          data = {}
+          if (@method.nil?)
+            data[:methods] = class_data[:methods].keys if class_data[:methods].size > 0
+            data[:includes] = class_data[:includes] if class_data[:includes].size > 0
+          else
+            raise "No method named '#{@method}' found for class #{klass}." if class_data[:methods][@method].nil?
+            data[:method] = @method
+            [:interface, :description].each do |sub|
+              data[sub] = class_data[:methods][@method][sub]
+            end
           end
-          l.css('div.method-description p, div.method-description pre').each do |p|
-            method_descr += p.content.to_s.gsub(/<.+?>(.+)?<\/.+?>/, '\1')
-          end
-        end
-        methods[method_name] = {
-          :interface => method_heading,
-          :description => method_descr
-          # :examples => method_examples
-        }
-      end
-      doc.css('#includes-list a').each do |incl|
-        includes << incl.content.to_s
-      end
 
-      data = {}
-
-      if (@method.nil?)
-        data[:methods] = methods.keys if methods.size > 0
-        data[:includes] = includes if includes.size > 0
-      else
-        raise "No method named '#{@method}' found for class #{klass}." if methods[@method].nil?
-        data[:method] = @method
-        [:interface, :description].each do |sub|
-          data[sub] = methods[@method][sub]
+          yield Formatter.cout({ klass => data }) if block_given?
         end
       end
-
-      Formatter.cout({ klass => data })
     end
   end
 
   def list
     { :available_classes => KLASSES }
+  end
+
+  def tutorial(&blk)
+    klass = KLASSES[Random.new.rand(KLASSES.size)]
+    RKlass::load_class_data(klass) do |klass_doc|
+      RKlass::parse_class_data(klass_doc) do |klass_data|
+        data = {}
+        if klass_data[:methods].any?
+          method = klass_data[:methods].keys[Random.new.rand(klass_data[:methods].keys.size)]
+          method_data = klass_data[:methods][method]
+          data[:method] = method
+          [:interface, :description].each do |sub|
+            data[sub] = method_data[sub]
+          end
+
+          yield Formatter.cout({ 'Tutorial mode' => ['on'], klass => data }) if block_given?
+        else
+          self.tutorial(&blk)
+        end
+      end
+    end
   end
 end

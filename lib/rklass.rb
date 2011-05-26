@@ -110,7 +110,7 @@ class RKlass
 
   def cout(&blk)
     if self.respond_to?(@search.to_sym)
-      Formatter.cout(self.send(@search.to_sym, &blk))
+      yield Formatter.cout(self.send(@search.to_sym)) if block_given?
     else
       klass = @search
       klass = klass.capitalize if !KLASSES.include?(klass)

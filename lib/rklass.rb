@@ -105,16 +105,14 @@ class RKlass
     end
     data = { :methods => methods, :includes => includes }
     yield data if block_given?
-    data
   end
 
-  def cout(&blk)
+  def cout
     if self.respond_to?(@search.to_sym)
       yield Formatter.cout(self.send(@search.to_sym)) if block_given?
     else
       klass = @search
       klass = klass.capitalize if !KLASSES.include?(klass)
-      # class_data = parse_class_data(load_class_data(klass))
       RKlass::load_class_data(klass) do |klass_doc|
         RKlass::parse_class_data(klass_doc) do |class_data|
           data = {}
@@ -128,7 +126,7 @@ class RKlass
               data[sub] = class_data[:methods][@method][sub]
             end
           end
-
+        
           yield Formatter.cout({ klass => data }) if block_given?
         end
       end
@@ -139,7 +137,7 @@ class RKlass
     { :available_classes => KLASSES }
   end
 
-  def tutorial(&blk)
+  def tutorial
     klass = KLASSES[Random.new.rand(KLASSES.size)]
     RKlass::load_class_data(klass) do |klass_doc|
       RKlass::parse_class_data(klass_doc) do |klass_data|
@@ -151,10 +149,9 @@ class RKlass
           [:interface, :description].each do |sub|
             data[sub] = method_data[sub]
           end
-
-          yield Formatter.cout({ 'Tutorial mode' => ['on'], klass => data }) if block_given?
+          return { 'Tutorial mode' => ['on'], klass => data }
         else
-          self.tutorial(&blk)
+          return self.tutorial
         end
       end
     end

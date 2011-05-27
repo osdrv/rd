@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'rd'
-  s.version = '0.0.3'
+  s.version = '0.0.4'
   s.date = '2011-05-27'
 
   s.description = 'ruby kernel classes documentation cli tool'
